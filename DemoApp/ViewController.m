@@ -9,11 +9,11 @@
 #import "ViewController.h"
 #import "PECropViewController.h"
 
-@interface ViewController () <UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate,PECropViewControllerDelegate>
+@interface ViewController () <UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIActionSheetDelegate, PECropViewControllerDelegate>
 
-@property (weak, nonatomic) IBOutlet UIBarButtonItem *editButton;
-@property (weak, nonatomic) IBOutlet UIImageView *imageView;
-@property (weak, nonatomic) IBOutlet UIBarButtonItem *cameraButton;
+@property (nonatomic, weak) IBOutlet UIBarButtonItem *editButton;
+@property (nonatomic, weak) IBOutlet UIImageView *imageView;
+@property (nonatomic, weak) IBOutlet UIBarButtonItem *cameraButton;
 
 @property (nonatomic) UIPopoverController *popover;
 
@@ -24,26 +24,13 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 70000
-    if ([self respondsToSelector:@selector(edgesForExtendedLayout)]) {
-        self.edgesForExtendedLayout = UIRectEdgeNone;
-    }
-#endif
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    self.editButton.enabled = !!self.imageView.image;
-}
-
-- (void)viewDidUnload
-{
-    self.editButton = nil;
-    self.imageView = nil;
-    self.cameraButton = nil;
-    [super viewDidUnload];
+    // Disable edit button if there is no selected image.
+    [self updateEditButtonEnabled];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
@@ -51,26 +38,43 @@
     return YES;
 }
 
-#pragma mark -
+#pragma mark - PECropViewControllerDelegate methods
 
 - (void)cropViewController:(PECropViewController *)controller didFinishCroppingImage:(UIImage *)croppedImage
 {
     [controller dismissViewControllerAnimated:YES completion:NULL];
     self.imageView.image = croppedImage;
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        [self updateEditButtonEnabled];
+    }
 }
 
 - (void)cropViewControllerDidCancel:(PECropViewController *)controller
 {
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        [self updateEditButtonEnabled];
+    }
+    
     [controller dismissViewControllerAnimated:YES completion:NULL];
 }
 
-#pragma mark -
+#pragma mark - Action methods
 
 - (IBAction)openEditor:(id)sender
 {
     PECropViewController *controller = [[PECropViewController alloc] init];
     controller.delegate = self;
     controller.image = self.imageView.image;
+    
+    UIImage *image = self.imageView.image;
+    CGFloat width = image.size.width;
+    CGFloat height = image.size.height;
+    CGFloat length = MIN(width, height);
+    controller.imageCropRect = CGRectMake((width - length) / 2,
+                                          (height - length) / 2,
+                                          length,
+                                          length);
     
     UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:controller];
     
@@ -101,6 +105,8 @@
         [actionSheet showFromToolbar:self.navigationController.toolbar];
     }
 }
+
+#pragma mark - Private methods
 
 - (void)showCamera
 {
@@ -142,8 +148,16 @@
     }
 }
 
-#pragma mark -
+- (void)updateEditButtonEnabled
+{
+    self.editButton.enabled = !!self.imageView.image;
+}
 
+#pragma mark - UIActionSheetDelegate methods
+
+/*
+ Open camera or photo album.
+ */
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     NSString *buttonTitle = [actionSheet buttonTitleAtIndex:buttonIndex];
@@ -154,6 +168,11 @@
     }
 }
 
+#pragma mark - UIImagePickerControllerDelegate methods
+
+/*
+ Open PECropViewController automattically when image selected.
+ */
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
     UIImage *image = info[UIImagePickerControllerOriginalImage];
@@ -163,6 +182,8 @@
         if (self.popover.isPopoverVisible) {
             [self.popover dismissPopoverAnimated:NO];
         }
+        
+        [self updateEditButtonEnabled];
         
         [self openEditor:nil];
     } else {

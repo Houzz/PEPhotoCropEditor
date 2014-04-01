@@ -290,19 +290,31 @@
             }
         }
     }
-    
+
     CGFloat minWidth = CGRectGetWidth(self.leftEdgeView.bounds) + CGRectGetWidth(self.rightEdgeView.bounds);
     if (CGRectGetWidth(rect) < minWidth) {
         rect.origin.x = CGRectGetMaxX(self.frame) - minWidth;
-        rect.size = CGSizeMake(minWidth,
-                               !self.fixedAspectRatio ? rect.size.height : rect.size.height * (minWidth / rect.size.width));
+        rect.size.width = minWidth;
     }
-    
+
     CGFloat minHeight = CGRectGetHeight(self.topEdgeView.bounds) + CGRectGetHeight(self.bottomEdgeView.bounds);
     if (CGRectGetHeight(rect) < minHeight) {
         rect.origin.y = CGRectGetMaxY(self.frame) - minHeight;
-        rect.size = CGSizeMake(!self.fixedAspectRatio ? rect.size.width : rect.size.width * (minHeight / rect.size.height),
-                               minHeight);
+        rect.size.height = minHeight;
+    }
+
+    if (self.fixedAspectRatio) {
+        CGRect constrainedRect = rect;
+
+        if (CGRectGetWidth(rect) < minWidth) {
+            constrainedRect.size.width = rect.size.height * (minWidth / rect.size.width);
+        }
+
+        if (CGRectGetHeight(rect) < minHeight) {
+            constrainedRect.size.height = rect.size.width * (minHeight / rect.size.height);
+        }
+
+        rect = constrainedRect;
     }
     
     return rect;

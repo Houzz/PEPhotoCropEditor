@@ -13,6 +13,7 @@
 
 @property (nonatomic) PECropView *cropView;
 @property (nonatomic) UIActionSheet *actionSheet;
+@property (nonatomic, strong) UIBarButtonItem *constraintButton;
 
 @end
 
@@ -69,10 +70,12 @@ static inline NSString *PELocalizedString(NSString *key, NSString *comment)
         UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
                                                                                        target:nil
                                                                                        action:nil];
-        UIBarButtonItem *constrainButton = [[UIBarButtonItem alloc] initWithTitle:PELocalizedString(@"Constrain", nil)
+        UIBarButtonItem *constrainButton = [[UIBarButtonItem alloc] initWithTitle:PELocalizedString(@"Square", nil)
                                                                             style:UIBarButtonItemStyleBordered
                                                                            target:self
                                                                            action:@selector(constrain:)];
+        self.constraintButton = constrainButton;
+        [constrainButton setPossibleTitles:[NSSet setWithObjects:PELocalizedString(@"Square", nil), PELocalizedString(@"Original", nil), nil]];
         self.toolbarItems = @[flexibleSpace, constrainButton, flexibleSpace];
     }
     self.navigationController.toolbarHidden = NO;
@@ -147,21 +150,40 @@ static inline NSString *PELocalizedString(NSString *key, NSString *comment)
 
 - (void)constrain:(id)sender
 {
-    self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil
-                                                   delegate:self
-                                          cancelButtonTitle:PELocalizedString(@"Cancel", nil)
-                                     destructiveButtonTitle:nil
-                                          otherButtonTitles:
-                        PELocalizedString(@"Original", nil),
-                        PELocalizedString(@"Square", nil),
-                        PELocalizedString(@"3 x 2", nil),
-                        PELocalizedString(@"3 x 5", nil),
-                        PELocalizedString(@"4 x 3", nil),
-                        PELocalizedString(@"4 x 6", nil),
-                        PELocalizedString(@"5 x 7", nil),
-                        PELocalizedString(@"8 x 10", nil),
-                        PELocalizedString(@"16 x 9", nil), nil];
-    [self.actionSheet showFromToolbar:self.navigationController.toolbar];
+//    self.actionSheet = [[UIActionSheet alloc] initWithTitle:nil
+//                                                   delegate:self
+//                                          cancelButtonTitle:PELocalizedString(@"Cancel", nil)
+//                                     destructiveButtonTitle:nil
+//                                          otherButtonTitles:
+//                        PELocalizedString(@"Original", nil),
+//                        PELocalizedString(@"Square", nil),
+//                        PELocalizedString(@"3 x 2", nil),
+//                        PELocalizedString(@"3 x 5", nil),
+//                        PELocalizedString(@"4 x 3", nil),
+//                        PELocalizedString(@"4 x 6", nil),
+//                        PELocalizedString(@"5 x 7", nil),
+//                        PELocalizedString(@"8 x 10", nil),
+//                        PELocalizedString(@"16 x 9", nil), nil];
+//    [self.actionSheet showFromToolbar:self.navigationController.toolbar];
+    if ( self.cropView.cropAspectRatio == 1.0f) {
+        CGRect cropRect = self.cropView.cropRect;
+        CGSize size = self.cropView.image.size;
+        CGFloat width = size.width;
+        CGFloat height = size.height;
+        CGFloat ratio;
+        if (width < height) {
+            ratio = width / height;
+            cropRect.size = CGSizeMake(CGRectGetHeight(cropRect) * ratio, CGRectGetHeight(cropRect));
+        } else {
+            ratio = height / width;
+            cropRect.size = CGSizeMake(CGRectGetWidth(cropRect), CGRectGetWidth(cropRect) * ratio);
+        }
+        self.cropView.cropRect = cropRect;
+        [_constraintButton setTitle:PELocalizedString(@"Square", nil)];
+    } else {
+        self.cropView.cropAspectRatio = 1.0f;
+        [_constraintButton setTitle:PELocalizedString(@"Original", nil)];
+    }
 }
 
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex

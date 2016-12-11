@@ -35,7 +35,7 @@
 
 static inline NSString *PELocalizedString(NSString *key, NSString *comment)
 {
-    return [[PECropViewController bundle] localizedStringForKey:key value:nil table:@"Localizable"];
+    return [[NSBundle mainBundle] localizedStringForKey:key value:nil table:@"data"];
 }
 
 - (instancetype)initWithCoder:(NSCoder *)aDecoder {

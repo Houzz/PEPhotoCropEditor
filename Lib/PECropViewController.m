@@ -35,7 +35,7 @@
 
 static inline NSString *PELocalizedString(NSString *key, NSString *comment)
 {
-    return [[NSBundle mainBundle] localizedStringForKey:key value:nil table:@"data"];
+    return [[NSBundle bundleWithIdentifier:@"com.houzz.HouzzFoundation"] localizedStringForKey:key value:nil table:@"data"];
 }
 
 - (instancetype)initWithCoder:(NSCoder *)aDecoder {

@@ -8,6 +8,7 @@
 
 #import "PECropViewController.h"
 #import "PECropView.h"
+@import HouzzFoundation;
 
 @interface PECropViewController () <UIActionSheetDelegate>
 
@@ -26,7 +27,7 @@
     static NSBundle *bundle = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        NSURL *bundleURL = [[NSBundle mainBundle] URLForResource:@"PEPhotoCropEditor" withExtension:@"bundle"];
+        NSURL *bundleURL = [NSBundle.sharedResources URLForResource:@"PEPhotoCropEditor" withExtension:@"bundle"];
         bundle = [[NSBundle alloc] initWithURL:bundleURL];
     });
     

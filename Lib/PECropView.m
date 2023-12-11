@@ -126,33 +126,42 @@ static const CGFloat MarginLeft = 20.0f;
     if (!self.image) {
         return;
     }
-    
+ 
+#if !TARGET_OS_VISION
     UIInterfaceOrientation interfaceOrientation = [[UIApplication sharedApplication] statusBarOrientation];
     if (UIInterfaceOrientationIsPortrait(interfaceOrientation)) {
         self.editingRect = CGRectInset(self.bounds, MarginLeft, MarginTop);
     } else {
         self.editingRect = CGRectInset(self.bounds, MarginLeft, MarginLeft);
     }
+#else
+    self.editingRect = CGRectInset(self.bounds, MarginLeft, MarginLeft);
+#endif
     
     if (!self.imageView) {
+#if !TARGET_OS_VISION
         if (UIInterfaceOrientationIsPortrait(interfaceOrientation)) {
             self.insetRect = CGRectInset(self.bounds, MarginLeft, MarginTop);
         } else {
             self.insetRect = CGRectInset(self.bounds, MarginLeft, MarginLeft);
         }
-        
+#else
+        self.insetRect = CGRectInset(self.bounds, MarginLeft, MarginLeft);
+#endif
         [self setupImageView];
     }
     
     if (!self.isResizing) {
         [self layoutCropRectViewWithCropRect:self.scrollView.frame];
-        
+#if !TARGET_OS_VISION
         if (self.interfaceOrientation != interfaceOrientation) {
             [self zoomToCropRect:self.scrollView.frame];
         }
+#endif
     }
-    
+#if !TARGET_OS_VISION
     self.interfaceOrientation = interfaceOrientation;
+#endif
 }
 
 - (void)layoutCropRectViewWithCropRect:(CGRect)cropRect
@@ -295,11 +304,13 @@ static const CGFloat MarginLeft = 20.0f;
 
 - (void)resetCropRectAnimated:(BOOL)animated
 {
+#if !TARGET_OS_VISION
     if (animated) {
         [UIView beginAnimations:nil context:NULL];
         [UIView setAnimationDuration:0.25];
         [UIView setAnimationBeginsFromCurrentState:YES];
     }
+#endif
     
     self.imageView.transform = CGAffineTransformIdentity;
     
@@ -310,10 +321,12 @@ static const CGFloat MarginLeft = 20.0f;
     self.scrollView.bounds = self.imageView.bounds;
     
     [self layoutCropRectViewWithCropRect:self.scrollView.bounds];
-    
+
+#if !TARGET_OS_VISION
     if (animated) {
         [UIView commitAnimations];
     }
+#endif
 }
 
 - (UIImage *)croppedImage
@@ -327,12 +340,16 @@ static const CGFloat MarginLeft = 20.0f;
     CGSize size = self.image.size;
     
     CGFloat ratio = 1.0f;
+#if !TARGET_OS_VISION
     UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad || UIInterfaceOrientationIsPortrait(orientation)) {
         ratio = CGRectGetWidth(AVMakeRectWithAspectRatioInsideRect(self.image.size, self.insetRect)) / size.width;
     } else {
         ratio = CGRectGetHeight(AVMakeRectWithAspectRatioInsideRect(self.image.size, self.insetRect)) / size.height;
     }
+#else
+    ratio = CGRectGetHeight(AVMakeRectWithAspectRatioInsideRect(self.image.size, self.insetRect)) / size.height;
+#endif
     
     CGRect zoomedCropRect = CGRectMake(cropRect.origin.x / ratio,
                                        cropRect.origin.y / ratio,
